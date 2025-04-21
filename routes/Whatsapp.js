@@ -4,49 +4,43 @@ const { MessagingResponse } = require('twilio').twiml;
 const axios = require('axios');
 
 // Configuration
-const NEWS_ITEMS_PER_CATEGORY = 5; // Number of news items to return
+const NEWS_ITEMS_PER_CATEGORY = 5;
 
-// Enhanced mock data with more items
+// Enhanced mock data
 const newsCategories = {
   'general': [
     { title: 'Global Summit Addresses Climate Change', description: 'World leaders gather to discuss new climate initiatives.' },
-    { title: 'Economy Shows Signs of Recovery', description: 'Latest economic indicators suggest gradual recovery.' },
-    { title: 'Major City Announces Green Initiative', description: 'Plan includes renewable energy and public transport upgrades.' },
-    { title: 'International Health Organization Issues Alert', description: 'New guidelines released for emerging health concern.' },
-    { title: 'Education Reforms Approved', description: 'Changes aim to improve accessibility and quality.' }
+    { title: 'Economy Shows Signs of Recovery', description: 'Latest economic indicators suggest gradual recovery.' }
   ],
   'technology': [
     { title: 'New AI Model Breaks Performance Records', description: 'Researchers unveil groundbreaking AI architecture.' },
-    { title: 'Quantum Computing Milestone Achieved', description: 'Company announces stable quantum operations.' },
-    { title: 'Tech Giant Unveils New Smartphone', description: 'Latest model features breakthrough battery technology.' },
-    { title: 'Open Source Project Reaches Major Milestone', description: 'Community-driven software hits version 5.0.' },
-    { title: 'Cybersecurity Firm Discovers Critical Vulnerability', description: 'Patch released for widely-used software.' }
+    { title: 'Quantum Computing Milestone Achieved', description: 'Company announces stable quantum operations.' }
   ],
-  // ... (similar expansions for sports and politics)
+  'sports': [
+    { title: 'National Team Wins Championship', description: 'Historic victory after decades with stunning performance.' },
+    { title: 'Olympic Preparations in Full Swing', description: 'Host city completes all venues ahead of schedule.' }
+  ],
+  'politics': [
+    { title: 'New Legislation Passes in Parliament', description: 'Controversial bill approved after heated debate.' },
+    { title: 'Diplomatic Tensions Ease Between Nations', description: 'Both sides agree to resume talks after months.' }
+  ]
 };
 
-// Health check endpoint (improved)
+// Health check endpoint
 router.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
-    timestamp: new Date().toISOString(),
     service: 'WhatsApp NewsBot',
     version: '1.0.0'
   });
 });
 
-// Twilio webhook handler (enhanced)
-router.post('/', async (req, res) => {
+// Twilio webhook handler
+router.post('/incoming', async (req, res) => {
   const twiml = new MessagingResponse();
   const incomingMsg = req.body.Body.trim().toLowerCase();
   
   try {
-    // Validate incoming message
-    if (!incomingMsg) {
-      throw new Error('Empty message received');
-    }
-
-    // Process message
     if (['hi', 'hello', 'menu'].includes(incomingMsg)) {
       twiml.message(
         `📰 *NewsBot* - Get latest headlines\n\n` +
@@ -87,17 +81,9 @@ router.post('/', async (req, res) => {
 
     res.type('text/xml').send(twiml.toString());
   } catch (error) {
-    console.error(`[${new Date().toISOString()}] Error:`, {
-      error: error.message,
-      incomingMsg,
-      stack: error.stack
-    });
-    
+    console.error('Error:', error);
     const errorTwiml = new MessagingResponse();
-    errorTwiml.message(
-      `⚠️ We encountered an error processing your request.\n` +
-      `Please try again later or contact support.`
-    );
+    errorTwiml.message('⚠️ Server error. Please try again later.');
     res.type('text/xml').send(errorTwiml.toString());
   }
 });
