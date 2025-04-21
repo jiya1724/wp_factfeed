@@ -8,7 +8,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 
 // Main routes
-app.use("/twilio", require("./routes"));
+app.use("/twilio", require("./routes/Whatsapp"));
 
 // Health check
 app.get('/', (req, res) => {
