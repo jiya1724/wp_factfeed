@@ -5,7 +5,7 @@ const axios = require('axios');
 const { URL } = require('url');
 
 // Configuration
-const NEWS_ITEMS_PER_CATEGORY = 3;
+const NEWS_ITEMS_PER_CATEGORY = 5; // Showing more headlines since we're not showing descriptions
 const GNEWS_API_KEY = process.env.GNEWS_API_KEY || 'cb5420399165811c674005ec43e29a8e';
 const GNEWS_API_URL = 'https://gnews.io/api/v4/top-headlines';
 
@@ -34,7 +34,7 @@ router.get('/health', (req, res) => {
   res.status(200).json({
     status: 'healthy',
     service: 'WhatsApp NewsBot',
-    version: '1.0.3',
+    version: '1.0.4',
     supported_languages: Object.values(languages),
     categories: Object.keys(categories).map(key => ({ 
       id: key, 
@@ -48,9 +48,9 @@ router.get('/health', (req, res) => {
 function formatUrl(url) {
   try {
     const parsedUrl = new URL(url);
-    return `${parsedUrl.hostname.replace('www.', '')} ↗`;
+    return `${parsedUrl.hostname.replace('www.', '')}`;
   } catch {
-    return 'Read more ↗';
+    return 'Source';
   }
 }
 
@@ -72,7 +72,6 @@ async function fetchNews(categoryObj, lang = 'en') {
     
     return response.data.articles.map(article => ({
       title: article.title,
-      description: article.description || 'No description available',
       url: article.url,
       source: article.source?.name || 'Source'
     }));
@@ -84,7 +83,7 @@ async function fetchNews(categoryObj, lang = 'en') {
 
 // Generate menu message with language instructions
 function getMenuMessage() {
-  let message = `📰 *NewsBot* - India Focused News\n\n`;
+  let message = `📰 *Factfeed-AI* - Namaste!🙏🏻\n\n`;
   message += `Choose category:\n\n`;
   
   Object.keys(categories).forEach(key => {
@@ -100,14 +99,10 @@ function getMenuMessage() {
   return message;
 }
 
-// Format news item with URL
-function formatNewsItem(item, index, lang) {
-  const urlDisplay = item.url ? ` (${formatUrl(item.url)})` : '';
-  const shortDesc = item.description.length > 80 
-    ? `${item.description.substring(0, 80)}...` 
-    : item.description;
-    
-  return `*${index + 1}. ${item.title}*${urlDisplay}\n${shortDesc}\n`;
+// Format news item with just title and URL
+function formatNewsItem(item, index) {
+  const source = formatUrl(item.url);
+  return `*${index + 1}. ${item.title}*\n${source}\n`;
 }
 
 // Parse incoming message for category and language
@@ -144,7 +139,7 @@ router.post('/incoming', async (req, res) => {
         if (newsItems.length > 0) {
           let responseText = `📢 *Top ${category.name.toUpperCase()} News ${category.country ? '(India)' : '(World)'} ${langInfo.emoji} ${langInfo.name}*\n\n`;
           newsItems.forEach((item, index) => {
-            responseText += formatNewsItem(item, index, lang) + '\n';
+            responseText += formatNewsItem(item, index) + '\n';
           });
           responseText += `\n*Language Options:*\n`;
           responseText += `Reply with "${categoryKey} en" for English\n`;
